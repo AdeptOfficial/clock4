@@ -137,6 +137,7 @@ extern _Bool resendDate;
 
 enum {
   MODE_ISO8601_STD =0,
+  MODE_AMPM_MMDDYY,
   MODE_ISO_ORDINAL,
   MODE_ISO_WEEK,
   MODE_UNIX,

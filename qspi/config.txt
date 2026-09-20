@@ -14,10 +14,19 @@ MATRIX_FREQUENCY = 20000
 
 
 
-## modes 
+# Main display hour format, 12 or 24.
+# The date display and the internal timekeeping are always 24 hour.
+HOUR_FORMAT = 12
+
+
+## modes
 
 # ISO8601 standard, YYYY-MM-DD
-MODE_ISO8601_STD=Enabled
+MODE_ISO8601_STD=disabled
+
+# am/pm marker and MM-DD-YY, e.g. "A 09-20-26"
+# The marker is blank if HOUR_FORMAT is 24
+MODE_AMPM_MMDDYY=Enabled
 
 # ISO8601 ordinal (day of year)
 MODE_ISO_Ordinal=disabled

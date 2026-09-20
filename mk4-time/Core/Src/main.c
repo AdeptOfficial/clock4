@@ -174,6 +174,7 @@ uint32_t LPTIM1_high;
 
 uint8_t displayMode = 0, countMode = 0, colonMode = 0;
 uint8_t requestMode = 255;
+_Bool is_pm = 0;
 uint8_t nmea_cdc_level=0;
 int debug_rtc_val = 0;
 
@@ -192,9 +193,10 @@ struct {
   time_t countdown_to;
   float brightness_override;
   volatile _Bool zone_override;
+  _Bool hour12;
   _Bool modes_enabled[NUM_DISPLAY_MODES];
 
-} config = {0};
+} config = { .hour12 = 1 };
 
 struct {
   float in;
@@ -245,6 +247,19 @@ void sendDate( _Bool now ){
     uart2_tx_buffer[8] ='-';
     uart2_tx_buffer[9] ='0'+nextBcd.tenDays;
     uart2_tx_buffer[10]='0'+nextBcd.days;
+    break;
+  case MODE_AMPM_MMDDYY:
+    // am/pm marker, blank, then MM-DD-YY
+    uart2_tx_buffer[1] = config.hour12? (is_pm? 'P':'A') : ' ';
+    uart2_tx_buffer[2] =' ';
+    uart2_tx_buffer[3] ='0'+nextBcd.tenMonths;
+    uart2_tx_buffer[4] ='0'+nextBcd.months;
+    uart2_tx_buffer[5] ='-';
+    uart2_tx_buffer[6] ='0'+nextBcd.tenDays;
+    uart2_tx_buffer[7] ='0'+nextBcd.days;
+    uart2_tx_buffer[8] ='-';
+    uart2_tx_buffer[9] ='0'+nextBcd.tenYears;
+    uart2_tx_buffer[10]='0'+nextBcd.years;
     break;
 #ifdef NONCOMPLIANT_DATE_MODES
   case MODE_DDMMYYYY:
@@ -510,8 +525,21 @@ void setNextTimestamp(time_t nextTime){
 
   next7seg.c = cLut[nextBcd.seconds];
 
-  next7seg.b[0] = bCat0 | cLut[nextBcd.tenHours]<<2;
-  next7seg.b[1] = bCat1 | cLut[nextBcd.hours]<<2;
+  // nextBcd always holds the 24 hour local time, only the display is converted
+  uint8_t hour24 = nextBcd.tenHours*10 + nextBcd.hours;
+  uint8_t dispTenHours = nextBcd.tenHours, dispHours = nextBcd.hours;
+
+  is_pm = (hour24 >= 12);
+
+  if (config.hour12) {
+    uint8_t h = hour24 % 12;
+    if (!h) h = 12;  // midnight is 12 am, noon is 12 pm
+    dispTenHours = h / 10;
+    dispHours    = h % 10;
+  }
+
+  next7seg.b[0] = bCat0 | cLut[dispTenHours]<<2;
+  next7seg.b[1] = bCat1 | cLut[dispHours]<<2;
   next7seg.b[2] = bCat2 | cLut[nextBcd.tenMinutes]<<2;
   next7seg.b[3] = bCat3 | cLut[nextBcd.minutes]<<2;
   next7seg.b[4] = bCat4 | cLut[nextBcd.tenSeconds]<<2;
@@ -952,8 +980,16 @@ void parseConfigString(char *key, char *value) {
       config.countdown_to = mktime(&t) -1;
 
     }
+  } else if (strcasecmp(key, "HOUR_FORMAT") == 0) {
+
+    // anything else is ignored, keeping the default
+    if      (strcmp(value, "12") == 0) config.hour12 = 1;
+    else if (strcmp(value, "24") == 0) config.hour12 = 0;
+
   } else if (strcasecmp(key, "MODE_ISO8601_STD") == 0) {
     set_mode_enabled(MODE_ISO8601_STD, value);
+  } else if (strcasecmp(key, "MODE_AMPM_MMDDYY") == 0) {
+    set_mode_enabled(MODE_AMPM_MMDDYY, value);
   } else if (strcasecmp(key, "MODE_ISO_ORDINAL") == 0) {
     set_mode_enabled(MODE_ISO_ORDINAL, value);
   } else if (strcasecmp(key, "MODE_ISO_WEEK") == 0) {
@@ -1147,6 +1183,7 @@ void readConfigFile(void){
   config.tolerance_100ms = 100000;
   config.zone_override = 0;
   config.brightness_override = -1.0;
+  config.hour12 = 1;
   colonMode = 0;
 
   FIL file;
