@@ -22,6 +22,12 @@ knows Manitoba stayed on UTC-5 and Cuba on UTC-4 on 1 November 2026. Copy it to 
 drive over the old `TZRULES.BIN` and eject; no reflash is needed. The clock picks it up at its
 next GPS position fix, or at power-up.
 
+With weak GPS reception the receiver can report a valid fix far from the true position, and
+upstream switches zone on a single lookup, then holds that zone while the signal is gone. Here
+the clock keeps the zone it has until every lookup has returned the same new zone for 10
+minutes (`mk4-time/Core/Inc/zonehold.h`), so a stray fix never moves it and a real move still
+does. `ZONE_OVERRIDE` still works as before.
+
 ## Upstream
 
 There are three software projects, compiled with STM32CubeIDE:

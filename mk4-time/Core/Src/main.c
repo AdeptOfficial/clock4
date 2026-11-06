@@ -31,6 +31,7 @@
 #include <math.h>
 #include "qspi_drv.h"
 #include "zonedetect.h"
+#include "zonehold.h"
 #include "chainloader.h"
 /* USER CODE END Includes */
 
@@ -2134,7 +2135,9 @@ int main(void)
 #ifdef MEASURE_LOOKUP_TIME
             start=uwTick;
 #endif
-            loadRulesSingle(zone);
+            // keep the zone in use until a different one is confirmed (zonehold.h)
+            if (zoneHoldAccept(loadedRulesString, zone, (uint32_t)currentTime))
+              loadRulesSingle(zone);
 #ifdef MEASURE_LOOKUP_TIME
             sprintf(textDisplay,"d%ld L%ld",ztime, uwTick-start);
 #endif
