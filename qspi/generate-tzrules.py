@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 
-import json, time, collections, subprocess, email.utils, calendar
+import json, time, collections, subprocess, email.utils, calendar, os
 
 # Use system tzdb
 ZDUMP="/usr/bin/zdump"
 # There's no obvious way to read which version of tzdata is installed
 # except for pacman -Q tzdata or whatever
+
+# Set TZDIR to a zic output directory to build from a newer tzdb than the system's.
+# zdump does not reliably honour TZDIR for bare zone names, so pass full paths.
+TZDIR = os.environ.get('TZDIR')
+def zdump_target(zone):
+  return os.path.join(TZDIR, zone) if TZDIR else zone
 
 zoneNames = json.load(open('timezone-names.json'))
 # e.g. https://github.com/evansiroky/timezone-boundary-builder/releases/download/2023b/timezone-names.json
@@ -144,7 +150,7 @@ for zone in zoneNames:
     continue
 
   rows = subprocess.run(
-    [ZDUMP, '-V', zone, '-c','2106'], capture_output=True
+    [ZDUMP, '-V', zdump_target(zone), '-c','2106'], capture_output=True
     ).stdout.decode('utf-8').split('\n')[:-1]
 
   if len(rows)==0:

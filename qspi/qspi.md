@@ -33,6 +33,16 @@ curl -L https://github.com/evansiroky/timezone-boundary-builder/releases/downloa
 
 The `generate-tzrules.py` file uses these names and the installed timezone database on the system it's running. Query the tzdata package to see the version (`pacman -Q tzdata` or `apt show tzdata`)
 
+To build from a newer tzdb than the system has, compile the release with `zic` and point `TZDIR` at the output:
+```
+curl -LO https://data.iana.org/time-zones/releases/tzdata2026f.tar.gz
+mkdir tzsrc && tar -xzf tzdata2026f.tar.gz -C tzsrc
+(cd tzsrc && zic -d ../zoneinfo -b fat africa antarctica asia australasia europe northamerica southamerica etcetera backward)
+TZDIR=$PWD/zoneinfo ./generate-tzrules.py
+```
+
+The current `output/tzrules.bin` is built from tzdb 2026f, with zone names from timezone-boundary-builder 2026d.
+
 ## config
 An example `config.txt` is provided. 
 

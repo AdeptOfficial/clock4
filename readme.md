@@ -17,6 +17,11 @@ internal timekeeping all stay 24 hour, so nothing downstream changes meaning.
 Only `mk4-time` is modified, so only `fwt.bin` needs reflashing. `qspi/fw-crc.ps1` is a
 Windows equivalent of `fw-crc.sh`, for machines without the `crc32` perl script.
 
+`qspi/output/tzrules.bin` is rebuilt from tzdb 2026f, ahead of upstream's 2026d, so the clock
+knows Manitoba stayed on UTC-5 and Cuba on UTC-4 on 1 November 2026. Copy it to the clock's
+drive over the old `TZRULES.BIN` and eject; no reflash is needed. The clock picks it up at its
+next GPS position fix, or at power-up.
+
 ## Upstream
 
 There are three software projects, compiled with STM32CubeIDE:
